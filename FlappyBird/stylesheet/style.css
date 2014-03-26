@@ -1,0 +1,8 @@
+.container {
+  width: 466px;
+  margin: 40px auto; }
+
+.canvas {
+  width: 466px;
+  height: 622px;
+  border: 1px solid #ccc; }
