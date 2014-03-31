@@ -3,7 +3,7 @@
 	var canvas = document.getElementById('canvas');
 	var ctx = canvas.getContext('2d');
 
-	var speed = 5;
+	var speed = 60;
 	var pause = false;
 
 	var gameObjects = [];
@@ -15,6 +15,7 @@
 	var floorHeight = 20;
 	var groundHeight = 100;
 	var skyHeight = canvas.height - groundHeight - floorHeight - buildingsHeight - cloudsHeight;
+	var backgroundVolicity = 1;
 
 	var loadAsset = function(assets,callback){
 		var result = {};
@@ -44,27 +45,46 @@
 		var s = birdImage.width/(birdImage.height/3);
 		var width = 70;
 		var bird = {
-			x:0,
-			y:0,
-			g:2,
-			vector: Vector2d(2,2),
+			x:canvas.width*0.3,
+			y:canvas.height*0.3,
+			g:0.1,
+			vector: Vector2d(0,0.2),
+			degree: 0,
 			width: width,
 			height: width/s,
 			index: 0,
+			round: 0,
 			fly:function(){
-				bird.g = -30;
+				bird.g = -0.3;
+				bird.vector.vy = -0.3;
+				bird.y -=15;
 				setTimeout(function(){
-					bird.g = 2;
+					bird.g = 0.1;
 				},50);
 			},
 			update:function(){
 				bird.x+=bird.vector.vx;
 				bird.y+=bird.vector.vy;
 				bird.vector.vy+= bird.g;
-				bird.index = (bird.index+birdImage.height/3)%birdImage.height;
+				bird.round += 1/10;
+				bird.index = (Math.floor(bird.round))%3;
+				if(bird.vector.vy<0){
+					bird.degree = -Math.PI/8;
+				}else{
+					bird.degree = -15*Math.PI/180 + Math.atan( bird.vector.vy/(bird.vector.vx||backgroundVolicity));
+				}
+				if(collison()){
+					pause = true;
+				}
 			},
 			draw:function(){
-				ctx.drawImage(birdImage,0,bird.index,birdImage.width,birdImage.height/3,bird.x,bird.y,bird.width,bird.height);
+				
+				ctx.save();
+				ctx.rotate(bird.degree);
+				var x = bird.x * Math.cos(-bird.degree) - bird.y * Math.sin(-bird.degree);
+				var y = bird.y * Math.cos(-bird.degree) + bird.x * Math.sin(-bird.degree);
+				ctx.drawImage(birdImage,0,bird.index*birdImage.height/3,birdImage.width,birdImage.height/3,x,y,bird.width,bird.height);
+				ctx.restore();
 			}
 		}
 		return bird;
@@ -82,8 +102,27 @@
 		var pipes = {
 			x:canvas.width,
 			y:0,
+			width: pipesWidth,
+			height:upHeight+downHeight+spaceHeight,
+			up:{
+				x:0,
+				y:0,
+				width:pipesWidth,
+				height:upHeight
+			},
+			down:{
+				x:0,
+				y:0,
+				width:pipesWidth,
+				height:downHeight
+			},
 			update:function(){
-				pipes.x-=8;
+				pipes.x -= backgroundVolicity;
+				pipes.up.x = pipes.x+pipesWidth/2 ;
+				pipes.up.y = pipes.y+upHeight/2 ;
+				pipes.down.x = pipes.x + pipesWidth/2 
+				pipes.down.y = pipes.y + upHeight+spaceHeight+downHeight/2;
+				if(pipes.x<-pipesWidth){pipes.remove=true};
 			},
 			draw:function(){
 				ctx.drawImage(pipesImage,up,realHeight-upHeight*rate,realWidth,upHeight*rate,pipes.x,pipes.y,pipesWidth,upHeight);
@@ -123,11 +162,11 @@
 
 	var Background = function(assets){
 
-		var cloudsImage = rollBackgroundImage( assets.clouds , 0 , skyHeight , assets.clouds.width*cloudsHeight/assets.clouds.height, cloudsHeight  , 1);
+		var cloudsImage = rollBackgroundImage( assets.clouds , 0 , skyHeight , assets.clouds.width*cloudsHeight/assets.clouds.height, cloudsHeight  , 0.1);
 
-		var buildingsImage = rollBackgroundImage( assets.buildings , 0 , skyHeight+cloudsHeight , assets.buildings.width*buildingsHeight/assets.buildings.height, buildingsHeight, 2);
+		var buildingsImage = rollBackgroundImage( assets.buildings , 0 , skyHeight+cloudsHeight , assets.buildings.width*buildingsHeight/assets.buildings.height, buildingsHeight, 0.2);
 		
-		var floorImage =  rollBackgroundImage( assets.floor , 0 , skyHeight+cloudsHeight+buildingsHeight , assets.floor.width*floorHeight/assets.floor.height, floorHeight , 8);
+		var floorImage =  rollBackgroundImage( assets.floor , 0 , skyHeight+cloudsHeight+buildingsHeight , assets.floor.width*floorHeight/assets.floor.height, floorHeight , backgroundVolicity);
 		
 		var height = canvas.height - groundHeight;
 
@@ -151,6 +190,22 @@
 			}
 		}
 		return background;
+	}
+
+	var collison = function(){
+		var bird = gameObjects[1];
+		for(var i=2;i<gameObjects.length;i++){
+			if(isRectCross(bird,gameObjects[i].up)||isRectCross(bird,gameObjects[i].down))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	var isRectCross = function(rect1,rect2){
+		return Math.abs(rect1.x-rect2.x)<(rect1.width+rect1.width)/2
+		&& Math.abs(rect1.y-rect2.y)<(rect1.height+rect2.height)/2;
 	}
 
 	var gameLoop = function(){
@@ -198,7 +253,7 @@
 		var addPipe = function(){
 			var p = Pipes({ pipes: assets.sprites });
 			gameObjects.push(p);
-			var time = 3000+Math.random()*2000
+			var time = 150*1000/(speed*backgroundVolicity) * (1+Math.random()) ;
 			setTimeout(addPipe,time);
 		}
 
