@@ -17,6 +17,8 @@
 	var skyHeight = canvas.height - groundHeight - floorHeight - buildingsHeight - cloudsHeight;
 	var backgroundVolicity = 1;
 
+	var crash = true;
+
 	var loadAsset = function(assets,callback){
 		var result = {};
 		var count = assets.length;
@@ -40,21 +42,35 @@
 		}
 	}
 
+	var sounds = [
+		'fx_rope_swinging_swish_2',
+		'fx_punch26',
+		'fx_app_game_interactive_alert_tone_016',
+		'fx_cartoonish_whip_crack'
+	];
+
+	sounds.forEach(function(sound){
+		var audio = document.getElementById(sound);
+		sounds[sound] = audio;
+	});
+
 	var Bird = function(assets){
 		var birdImage = assets.bird;
 		var s = birdImage.width/(birdImage.height/3);
+		var sensitive = 10;
 		var width = 70;
 		var bird = {
-			x:canvas.width*0.3,
-			y:canvas.height*0.3,
+			x:canvas.width*0.25,
+			y:canvas.height*0.5,
 			g:0.1,
 			vector: Vector2d(0,0.2),
 			degree: 0,
-			width: width,
-			height: width/s,
+			width: width-sensitive,
+			height: width/s-sensitive,
 			index: 0,
 			round: 0,
 			fly:function(){
+				sounds.fx_punch26.play();
 				bird.g = -0.3;
 				bird.vector.vy = -0.3;
 				bird.y -=15;
@@ -63,6 +79,13 @@
 				},50);
 			},
 			update:function(){
+
+				if(bird.y+bird.height/2+sensitive>=skyHeight+cloudsHeight+buildingsHeight){
+					sounds.fx_cartoonish_whip_crack.play();
+					pause = true;
+					return;
+				}
+
 				bird.x+=bird.vector.vx;
 				bird.y+=bird.vector.vy;
 				bird.vector.vy+= bird.g;
@@ -73,17 +96,20 @@
 				}else{
 					bird.degree = -15*Math.PI/180 + Math.atan( bird.vector.vy/(bird.vector.vx||backgroundVolicity));
 				}
+
 				if(collison()){
-					pause = true;
+					bird.g = 4;
+					crash = true;
 				}
+
 			},
 			draw:function(){
-				
 				ctx.save();
 				ctx.rotate(bird.degree);
 				var x = bird.x * Math.cos(-bird.degree) - bird.y * Math.sin(-bird.degree);
 				var y = bird.y * Math.cos(-bird.degree) + bird.x * Math.sin(-bird.degree);
-				ctx.drawImage(birdImage,0,bird.index*birdImage.height/3,birdImage.width,birdImage.height/3,x,y,bird.width,bird.height);
+				ctx.drawImage(birdImage,0,bird.index*birdImage.height/3,birdImage.width,birdImage.height/3,
+					x-(bird.width+sensitive)/2,y-(bird.height+sensitive)/2,bird.width+sensitive,bird.height+sensitive);
 				ctx.restore();
 			}
 		}
@@ -130,7 +156,23 @@
 			}
 		}
 		return pipes;
+	}
 
+	var ButtonObject = function(assets){
+		var button = {
+
+		}
+		return button;
+	}
+
+	var firstSence = function(assets){
+		var image =assets.sprites;
+		return {
+			update:function(){},
+			draw:function(){
+				ctx.drawImage(image,0,0,450,120,(canvas.width-300)/2,100,300,75);
+			}
+		}
 	}
 
 
@@ -194,9 +236,14 @@
 
 	var collison = function(){
 		var bird = gameObjects[1];
+		if(bird.y+bird.height/2>=skyHeight+cloudsHeight+buildingsHeight){
+			sounds.fx_cartoonish_whip_crack.play();
+			return true;
+		}
 		for(var i=2;i<gameObjects.length;i++){
 			if(isRectCross(bird,gameObjects[i].up)||isRectCross(bird,gameObjects[i].down))
 			{
+				sounds.fx_cartoonish_whip_crack.play();
 				return true;
 			}
 		}
@@ -242,11 +289,15 @@
 			floor: assets.floor
 		})
 
+		backgroundObject.draw();
+
 		gameObjects.push( backgroundObject );
 
 		var bird = Bird( {
 			bird: assets.birds
 		} )
+
+		bird.draw();
 
 		gameObjects.push( bird );
 
@@ -258,14 +309,20 @@
 		}
 
 		document.addEventListener('click',function(){
-			bird.fly();
+			if(!crash){
+				bird.fly();
+			}
 		})
 
-		gameLoop();
-		addPipe();
+		firstSence(assets).draw();
+		// crash = false;
+		// gameLoop();
+		// addPipe();
 
 
 	});
+
+
 
 
 })()
