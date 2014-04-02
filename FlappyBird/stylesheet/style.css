@@ -2,5 +2,21 @@
   width: 450px;
   margin: 40px auto; }
 
+.canvas-wrapper {
+  position: relative; }
+
 .canvas {
   border: 1px solid #ccc; }
+
+.start-btn {
+  position: absolute;
+  background: url("../image/sprites.gif") no-repeat 0px -52px;
+  width: 140px;
+  height: 65px;
+  background-size: 523.80952px 385.71429px;
+  top: 400px;
+  left: 160px;
+  z-index: 1;
+  cursor: pointer; }
+  .start-btn:hover {
+    opacity: 0.95; }

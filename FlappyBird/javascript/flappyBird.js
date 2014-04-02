@@ -60,23 +60,26 @@
 		var sensitive = 10;
 		var width = 70;
 		var bird = {
+			name:'bird',
 			x:canvas.width*0.25,
 			y:canvas.height*0.5,
-			g:0.1,
+			g:0.2,
 			vector: Vector2d(0,0.2),
 			degree: 0,
 			width: width-sensitive,
 			height: width/s-sensitive,
 			index: 0,
 			round: 0,
+			keepflying:false,
 			fly:function(){
 				sounds.fx_punch26.play();
+				var oldG = bird.g;
 				bird.g = -0.3;
 				bird.vector.vy = -0.3;
 				bird.y -=15;
 				setTimeout(function(){
-					bird.g = 0.1;
-				},50);
+					bird.g = oldG;
+				},100);
 			},
 			update:function(){
 
@@ -85,12 +88,14 @@
 					pause = true;
 					return;
 				}
-
+				bird.round += 1/10;
+				bird.index = (Math.floor(bird.round))%3;
+				if(bird.keepflying){
+					return ;
+				}
 				bird.x+=bird.vector.vx;
 				bird.y+=bird.vector.vy;
 				bird.vector.vy+= bird.g;
-				bird.round += 1/10;
-				bird.index = (Math.floor(bird.round))%3;
 				if(bird.vector.vy<0){
 					bird.degree = -Math.PI/8;
 				}else{
@@ -126,6 +131,7 @@
 		var rate = realWidth/pipesWidth;
 
 		var pipes = {
+			name:'pipes',
 			x:canvas.width,
 			y:0,
 			width: pipesWidth,
@@ -158,23 +164,22 @@
 		return pipes;
 	}
 
-	var ButtonObject = function(assets){
-		var button = {
-
-		}
-		return button;
-	}
-
 	var firstSence = function(assets){
 		var image =assets.sprites;
 		return {
+			name:'f',
+			x:0,
+			y:0,
+			width:0,
+			height:0,
+			remove:false,
 			update:function(){},
 			draw:function(){
 				ctx.drawImage(image,0,0,450,120,(canvas.width-300)/2,100,300,75);
+				ctx.drawImage(image,470,0,330,244,(canvas.width-200)/2,240,200,140);
 			}
 		}
 	}
-
 
 	var rollBackgroundImage =  function(image,x,y,width,height,rollSpeed){
 		var roll = {
@@ -241,10 +246,12 @@
 			return true;
 		}
 		for(var i=2;i<gameObjects.length;i++){
+			if(gameObjects[i].name==='pipes'){
 			if(isRectCross(bird,gameObjects[i].up)||isRectCross(bird,gameObjects[i].down))
 			{
 				sounds.fx_cartoonish_whip_crack.play();
 				return true;
+			}
 			}
 		}
 		return false;
@@ -297,6 +304,7 @@
 			bird: assets.birds
 		} )
 
+		bird.keepflying = true;
 		bird.draw();
 
 		gameObjects.push( bird );
@@ -312,11 +320,21 @@
 			if(!crash){
 				bird.fly();
 			}
+		});
+		var f= firstSence(assets);
+
+		var btn = document.getElementById('start-btn');
+			btn.addEventListener('click',function(){
+				addPipe();
+				bird.keepflying = false;
+				f.remove = true;
+				crash = false;
+				btn.style.display = 'none';
 		})
 
-		firstSence(assets).draw();
+		gameObjects.push(f);
 		// crash = false;
-		// gameLoop();
+		gameLoop();
 		// addPipe();
 
 

@@ -3,6 +3,26 @@
 	margin: 40px auto;
 }
 
+.canvas-wrapper{
+	position: relative;
+}
+
 .canvas{
 	border: 1px solid #ccc;
+}
+
+.start-btn{
+	position: absolute;
+	background:url('../image/sprites.gif') no-repeat 0px -52px;
+	width: 140px;
+	height: 65px;
+	background-size: 1100px*100px/210px 900px*60px/140px;
+	top: 400px;
+	left: 160px;
+	z-index: 1;
+	cursor: pointer;
+
+	&:hover{
+		opacity:0.95;
+	}
 }
