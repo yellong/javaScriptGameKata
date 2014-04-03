@@ -8,6 +8,8 @@
 
 	var gameObjects = [];
 	var funcList = [];
+	var bird = {};
+	var gameScore = {};
 
 
 	var cloudsHeight = 60;
@@ -66,6 +68,7 @@
 			g:0.2,
 			vector: Vector2d(0,0.2),
 			degree: 0,
+			zIndex: 2,
 			width: width-sensitive,
 			height: width/s-sensitive,
 			index: 0,
@@ -136,6 +139,7 @@
 			y:0,
 			width: pipesWidth,
 			height:upHeight+downHeight+spaceHeight,
+			passed: false,
 			up:{
 				x:0,
 				y:0,
@@ -149,6 +153,12 @@
 				height:downHeight
 			},
 			update:function(){
+
+				if(!pipes.passed && pipes.x+pipesWidth<bird.x-bird.width/2-3){
+					gameScore.add(1);
+					pipes.passed = true;
+				}
+
 				pipes.x -= backgroundVolicity;
 				pipes.up.x = pipes.x+pipesWidth/2 ;
 				pipes.up.y = pipes.y+upHeight/2 ;
@@ -206,6 +216,40 @@
 		return roll;
 	}
 
+	var ScoreObject = function(assets){
+		var image = assets.sprites;
+		var position = [0,423];
+		var image_width = 70, image_height=80;
+		var number_width = 49,number_height=56;
+		var score = {
+			x:0,
+			y:0,
+			value:0,
+			width:0,
+			height:0,
+			zIndex:1,
+			update:function(){
+			},
+			add:function(n){
+				score.value+=n;
+				sounds.fx_app_game_interactive_alert_tone_016.play();
+			},
+			draw:function(){
+				var score_numbers = score.value.toString().split("");
+				var l = score_numbers.length;
+				score.width = l*(number_width);
+				score.height = number_height;
+
+				score_numbers.forEach(function(num,i){
+					ctx.drawImage(image,position[0]+num*image_width,position[1],image_width,image_height,
+						(canvas.width/2-score.width/2)+number_width*i,40,number_width,number_height
+						);
+				})
+			}
+		}
+		return score;
+	}
+
 
 	var Background = function(assets){
 
@@ -240,18 +284,16 @@
 	}
 
 	var collison = function(){
-		var bird = gameObjects[1];
 		if(bird.y+bird.height/2>=skyHeight+cloudsHeight+buildingsHeight){
 			sounds.fx_cartoonish_whip_crack.play();
 			return true;
 		}
-		for(var i=2;i<gameObjects.length;i++){
+		for(var i=0;i<gameObjects.length;i++){
 			if(gameObjects[i].name==='pipes'){
-			if(isRectCross(bird,gameObjects[i].up)||isRectCross(bird,gameObjects[i].down))
-			{
-				sounds.fx_cartoonish_whip_crack.play();
-				return true;
-			}
+				if(isRectCross(bird,gameObjects[i].up)||isRectCross(bird,gameObjects[i].down)){
+					sounds.fx_cartoonish_whip_crack.play();
+					return true;
+				}
 			}
 		}
 		return false;
@@ -269,15 +311,19 @@
 		var newGameObjects = [];
 		gameObjects.forEach(function(item){
 			if(!item.remove){
+				if(!item.zIndex){item.zIndex=0}
 				newGameObjects.push(item);
-				item.update();
-				item.draw();
 			}
 		});
-		gameObjects = newGameObjects;
-		funcList.forEach(function(func){
-			func(gameObjects);
+
+		newGameObjects.sort(function(a,b){return a.zIndex-b.zIndex});
+		newGameObjects.forEach(function(item){
+			item.update();
+			item.draw();
 		})
+
+		gameObjects = newGameObjects;
+		
 		setTimeout(gameLoop,1000/speed);
 	}
 
@@ -300,7 +346,7 @@
 
 		gameObjects.push( backgroundObject );
 
-		var bird = Bird( {
+		bird = Bird( {
 			bird: assets.birds
 		} )
 
@@ -308,6 +354,8 @@
 		bird.draw();
 
 		gameObjects.push( bird );
+
+		gameScore = ScoreObject(assets);
 
 		var addPipe = function(){
 			var p = Pipes({ pipes: assets.sprites });
@@ -330,6 +378,7 @@
 				f.remove = true;
 				crash = false;
 				btn.style.display = 'none';
+				gameObjects.push(gameScore);
 		})
 
 		gameObjects.push(f);
