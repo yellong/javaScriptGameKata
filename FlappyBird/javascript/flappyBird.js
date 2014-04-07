@@ -17,7 +17,7 @@
 	var floorHeight = 20;
 	var groundHeight = 100;
 	var skyHeight = canvas.height - groundHeight - floorHeight - buildingsHeight - cloudsHeight;
-	var backgroundVolicity = 1;
+	var backgroundVolicity = 2.6;
 
 	var crash = true;
 
@@ -59,7 +59,7 @@
 	var Bird = function(assets){
 		var birdImage = assets.bird;
 		var s = birdImage.width/(birdImage.height/3);
-		var sensitive = 10;
+		var sensitive = 8;
 		var width = 70;
 		var bird = {
 			name:'bird',
@@ -85,10 +85,10 @@
 				},100);
 			},
 			update:function(){
-
 				if(bird.y+bird.height/2+sensitive>=skyHeight+cloudsHeight+buildingsHeight){
 					sounds.fx_cartoonish_whip_crack.play();
 					pause = true;
+					gameover();
 					return;
 				}
 				bird.round += 1/10;
@@ -119,6 +119,16 @@
 				ctx.drawImage(birdImage,0,bird.index*birdImage.height/3,birdImage.width,birdImage.height/3,
 					x-(bird.width+sensitive)/2,y-(bird.height+sensitive)/2,bird.width+sensitive,bird.height+sensitive);
 				ctx.restore();
+			},
+			reset:function(){
+				bird.x = canvas.width*0.25;
+				bird.y = canvas.height*0.5;
+				bird.g = 2;
+				bird.degree = 0;
+				bird.vector = Vector2d(0,0.2);
+				bird.round = 0;
+				bird.index = 0;
+				bird.keepflying = false;
 			}
 		}
 		return bird;
@@ -218,9 +228,9 @@
 
 	var ScoreObject = function(assets){
 		var image = assets.sprites;
-		var position = [0,423];
-		var image_width = 70, image_height=80;
-		var number_width = 49,number_height=56;
+		var position = [2,422];
+		var image_width =68, image_height=88;
+		var number_width = 49,number_height=60;
 		var score = {
 			x:0,
 			y:0,
@@ -228,6 +238,12 @@
 			width:0,
 			height:0,
 			zIndex:1,
+			getScore:function(){
+				return score.value;
+			},
+			setScore:function(v){
+				score.value= v;
+			},
 			update:function(){
 			},
 			add:function(n){
@@ -248,6 +264,47 @@
 			}
 		}
 		return score;
+	}
+
+	var NumberImage =  function(options){
+		var image = options.assets.sprites,
+			x = options.x,
+			y = options.y,
+			image_x = options.image_x,
+			image_y = options.image_y;
+		var image_width = options.image_width,
+			image_height = options.image_height,
+			number_width = options.number_width,
+			number_height = options.number_height,
+			value = options.value;
+		var number = {
+			x:0,
+			y:0,
+			width:0,
+			height:0,
+			zIndex:1,
+			setNumber:function(v){
+				value = v;
+			},
+			getNumber:function(){
+				return value;
+			},
+			update:function(){
+			},
+			draw:function(){
+				var score_numbers = value.toString().split("");
+				var l = score_numbers.length;
+				number.width = l*(number_width);
+				number.height = number_height;
+
+				score_numbers.forEach(function(num,i){
+					ctx.drawImage(image,image_x+num*image_width,image_y,image_width,image_height,
+						x,y,number_width,number_height
+						);
+				});
+			}
+		}
+		return number;
 	}
 
 
@@ -327,14 +384,63 @@
 		setTimeout(gameLoop,1000/speed);
 	}
 
-	loadAsset([
-			imageAsset('buildings','image/buildings.jpg'),
-			imageAsset('clouds','image/clouds.jpg'),
-			imageAsset('floor','image/floor.jpg'),
-			imageAsset('sprites','image/sprites.gif'),
-			imageAsset('birds','image/birds.gif')
-			],
-	function(assets){
+	var LastSence = function(assets){
+		var image = assets.sprites;
+		var best = NumberImage({
+			assets: assets,
+			x: 350,
+			y: 260,
+			number_width: 30,
+			number_height: 40,
+			image_x: 575,
+			image_y: 700,
+			image_width: 45,
+			image_height: 60,
+			value: 0,
+		});
+		var s = NumberImage({
+			assets: assets,
+			x: 350,
+			y: 340,
+			number_width: 30,
+			number_height: 40,
+			image_x: 575,
+			image_y: 700,
+			image_width: 45,
+			image_height: 60,
+			value:0
+		});
+		return {
+			draw:function(){
+				var score = gameScore.getScore();
+				best.setNumber(window.localStorage.getItem('best'));
+				s.setNumber(score);
+				ctx.drawImage(image,0,520,500,110,(canvas.width-280)/2,120,300,70);
+				ctx.drawImage(image,0,630,570,330,(canvas.width-390)/2,200,400,240);
+				var i = 0;
+				var d = s.getNumber()- best.getNumber();
+				if(d>0){
+					i = d>5?2:(d<3?0:1);
+					ctx.drawImage(image,575+i*120,770,110,110,78,285,75,75);
+				}
+				best.draw();
+				s.draw();
+			}
+		}
+	}
+
+	var gameover = function(){
+		
+	}
+
+	var addPipe = function(){}
+	var f;
+
+	var start = function(assets){
+
+		ctx.fillRect(0,0,canvas.width,canvas.height);
+		gameObjects = [];
+		pause = false;
 
 		var backgroundObject = Background({
 			clouds:assets.clouds,
@@ -357,38 +463,84 @@
 
 		gameScore = ScoreObject(assets);
 
-		var addPipe = function(){
+		addPipe = function(){
+			if(pause){
+				return;
+			}
 			var p = Pipes({ pipes: assets.sprites });
 			gameObjects.push(p);
-			var time = 150*1000/(speed*backgroundVolicity) * (1+Math.random()) ;
+			var time = 150*1000/(speed*backgroundVolicity) * (2+Math.random()) ;
 			setTimeout(addPipe,time);
 		}
+		
+		f= firstSence(assets);
+		
 
-		document.addEventListener('click',function(){
-			if(!crash){
+		gameover = function(){
+			pause = true;
+			crash = true;
+			var best = window.localStorage.getItem('best');
+			if(gameScore.getScore()>best){
+				window.localStorage.setItem('best',gameScore.getScore());
+			}
+			var over = LastSence(assets);
+			over.draw();
+			document.getElementById('restart-btn').style.display = 'block';
+		}
+
+		gameObjects.push(f);
+		gameLoop();
+	}
+
+	
+
+	loadAsset([
+			imageAsset('buildings','image/buildings.jpg'),
+			imageAsset('clouds','image/clouds.jpg'),
+			imageAsset('floor','image/floor.jpg'),
+			imageAsset('sprites','image/sprites.gif'),
+			imageAsset('birds','image/birds.gif')
+			],
+	function(assets){
+		var oldStart = start;
+		start=function(){
+			oldStart(assets);
+		}
+		start();
+	});
+
+	document.addEventListener('click',function(){
+			if(!crash && !pause){
 				bird.fly();
 			}
 		});
-		var f= firstSence(assets);
 
-		var btn = document.getElementById('start-btn');
-			btn.addEventListener('click',function(){
+	var rebtn = document.getElementById('restart-btn');
+
+
+	var btn = document.getElementById('start-btn');
+
+	rebtn.addEventListener('click',function(e){
+		start();
+		rebtn.style.display = 'none';
+		btn.style.display = 'block';
+		e.stopPropagation();
+	});
+		btn.addEventListener('click',function(e){
 				addPipe();
 				bird.keepflying = false;
 				f.remove = true;
 				crash = false;
 				btn.style.display = 'none';
 				gameObjects.push(gameScore);
-		})
+				if(pause){
+					pause = false;
+					gameLoop();
+				}
+				e.stopPropagation();
+		});
 
-		gameObjects.push(f);
-		// crash = false;
-		gameLoop();
-		// addPipe();
-
-
-	});
-
+		
 
 
 
