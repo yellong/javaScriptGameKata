@@ -1,0 +1,26 @@
+<html>
+<head>
+	<title>test</title>
+</head>
+<body>
+	<canvas id="annagame" width="300" height="400"></canvas>
+	<img id="sp" src="image/sprites.gif" style="display:none">
+	<script type="text/javascript" scr="javascript/utils.js"></script>
+	<script type="text/javascript" src="javascript/annagame.js"></script>
+	<script type="text/javascript">
+		var ib = annagame.image({
+			image: 'image/sprites.gif',
+			x:2,
+			y:422,
+			width:69,
+			height:88,
+			framesCount:10,
+			h:true
+		})
+
+		ib.draw();
+		
+
+	</script>
+</body>
+</html>
