@@ -4,7 +4,7 @@ var Pen = function(options){
 
 	this.grid = options.grid;
 	this.cell_size = options.cell_size;
-	this.cell_color = options.cell_color || 'CCCCCC';
+	this.cell_color = options.cell_color || '#000';
 
 	this.init();
 }
@@ -24,7 +24,7 @@ Pen.prototype.clean = function(){
 Pen.prototype.drawCell = function(options) {
 	var pen = this.pen , cell_size = this.cell_size;
 	var x = options.x , y = options.y , value = options.value;
-	pen.fillStyle = value ? this.cell_color : 'fff' ;
+	pen.fillStyle = value ? this.cell_color : '#CCC' ;
 	pen.fillRect(x*cell_size+1,y*cell_size+1,cell_size-1,cell_size-1);
 };
 

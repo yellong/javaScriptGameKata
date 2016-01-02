@@ -1,6 +1,7 @@
 .container{
 	width: 600px;
 	margin: auto;
+  padding: 40px;
 }
 
 .canvas{
@@ -24,10 +25,13 @@
 	text-align: center;
 	border-radius: 5px;
 	outline: 0;
+  cursor: pointer;
 }
 
 .restart:hover{
-	background-color: #dfdfdf;
+	/*background-color: #dfdfdf;*/
+  background-color: #000;
+  color: #fff;
 }
 
 .restart:active{
@@ -63,6 +67,7 @@
 	width: 154px;
 	vertical-align: top;
 	text-align: center;
+  margin-left: 15px;
 }
 
 .panel{

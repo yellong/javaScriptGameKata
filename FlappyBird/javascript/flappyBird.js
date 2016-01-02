@@ -5,9 +5,9 @@
 
 	var speed = 60;
 	var pause = false;
+	var crash = true;
 
 	var gameObjects = [];
-	var funcList = [];
 	var bird = {};
 	var gameScore = {};
 
@@ -18,8 +18,6 @@
 	var groundHeight = 100;
 	var skyHeight = canvas.height - groundHeight - floorHeight - buildingsHeight - cloudsHeight;
 	var backgroundVolicity = 2.6;
-
-	var crash = true;
 
 	var loadAsset = function(assets,callback){
 		var result = {};

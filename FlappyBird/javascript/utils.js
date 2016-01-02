@@ -1,6 +1,6 @@
 (function(root){
-
-root.Event = {
+var annagame = root.annagame = root.annagame || {}
+annagame.Event = {
 	on: function(event,callback){
 		this.__event = this.__event || {};
 		this.__event[event] = this._event[event] || [];
@@ -31,7 +31,7 @@ root.Event = {
 	}
 }
 
-root.extend = function(obj){
+annagame.extend = function(obj){
 	Array.prototype.slice.call(arguments,1).forEach(function(source){
 		for(var pro in source){
 			obj[pro] = source[pro]
@@ -39,6 +39,5 @@ root.extend = function(obj){
 	})
 	return obj;
 }
-
 
 })(this)

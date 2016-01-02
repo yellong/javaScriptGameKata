@@ -1,6 +1,6 @@
 var Game = function(options){
 	var self = this;
-	this.grid = new Grid({x_cell_count: 12,y_cell_count: 20});
+	this.grid = new Grid({x_cell_count: 12,y_cell_count: 16});
 	this.pen = new Pen({
 		canvas: document.getElementById('canvas'),
 		cell_size: 30,
